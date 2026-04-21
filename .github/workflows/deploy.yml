@@ -1,0 +1,47 @@
+name: Deploy MERN App
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker images
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-frontend ./frontend
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/mern-backend ./backend
+          docker push ${{ secrets.DOCKER_USERNAME }}/mern-frontend
+          docker push ${{ secrets.DOCKER_USERNAME }}/mern-backend
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/mern-frontend
+            docker pull ${{ secrets.DOCKER_USERNAME }}/mern-backend
+
+            docker stop frontend || true
+            docker rm frontend || true
+            docker stop backend || true
+            docker rm backend || true
+
+            docker run -d -p 80:80 --name frontend ${{ secrets.DOCKER_USERNAME }}/mern-frontend
+            docker run -d -p 4000:4000 --name backend ${{ secrets.DOCKER_USERNAME }}/mern-backend
