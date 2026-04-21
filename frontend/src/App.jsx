@@ -267,7 +267,7 @@ function App() {
             <p>Hours: Mon - Sat, 9:00 AM - 8:00 PM</p>
           </div>
         </div>
-        <p className="footer-copy">© {new Date().getFullYear()} MedCare. All rights reserved.</p>
+        <p className="footer-copy">© {new Date().getFullYear()} MedCare. All rights reserveds.</p>
       </footer>
     </div>
   );
